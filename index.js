@@ -46,7 +46,11 @@ var TIF = {                            //All text information frames
 function NodeID3() {
 }
 
-NodeID3.prototype.write = function(tags, filepath) {
+NodeID3.prototype.write = function(tags, filepath, callback) {
+    this.copy(tags, filepath, filepath, callback)
+}
+
+NodeID3.prototype.copy = function(tags, sourceFilepath, destFilepath, callback) {
     var frames = [];
     frames.push(this.createTagHeader());
 
@@ -82,17 +86,25 @@ NodeID3.prototype.write = function(tags, filepath) {
 
     var completeTag = Buffer.concat(frames);
 
-    try {
-        var data = fs.readFileSync(filepath);
-        data = this.removeTagsFromBuffer(data) || data;
-        var rewriteFile = Buffer.concat([completeTag, data]);
-        fs.writeFileSync(filepath, rewriteFile, 'binary');
-    } catch(e) {
-        return e;
-    }
-
-    return true;
+    fs.readFile(sourceFilepath, (err, data) => {
+      if(err) {
+        callback(err);
+        return;
+      }
+      // TODO remove tags not working
+      data = this.removeTagsFromBuffer(data) || data;
+      var rewriteFile = Buffer.concat([completeTag, data]);
+      fs.writeFile(destFilepath, rewriteFile, 'binary', (err) => {
+        if(err) {
+          callback(err);
+          return;
+        }
+        callback(null);
+      });
+    });
 }
+
+
 
 NodeID3.prototype.read = function(filebuffer) {
     if(typeof filebuffer === "string" || filebuffer instanceof String)
@@ -108,7 +120,7 @@ NodeID3.prototype.read = function(filebuffer) {
     for(var i = 0; i < frames.length; i++) {
         var frameStart = ID3Frame.indexOf(TIF[frames[i]]);
         if(frameStart == -1) continue;
-        
+
         frameSize = decodeSize(new Buffer([ID3Frame[frameStart + 4], ID3Frame[frameStart + 5], ID3Frame[frameStart + 6], ID3Frame[frameStart + 7]]));
         var offset = 1;
         if(ID3Frame[frameStart + 11] == 0xFF || ID3Frame[frameStart + 12] == 0xFE) {

@@ -2,16 +2,22 @@ var nodeID3 = require('../index.js');
 
 //tags.image is the path to the image (only png/jpeg files allowed)
 var tags = {
-  title: "Soshite Bokura wa",
+  title: "Soshite Bokura",
   artist: "Ray",
   album: "Nagi no Asukara",
-  composer: "Nakazawa Tomoyuki",
-  image: "./example/image.jpeg"
+  composer: "Nakazawa Tomoyuki"
+  //image: "./example/image.jpeg"
 }
 
-var success = nodeID3.write(tags, "./example/music.mp3");	//Pass tags and filepath
-console.log(success);
+nodeID3.write(tags, "./example/music.mp3", function (err){
+  console.log("as")
+  if(err) {
+    console.log("Error " + err);
+    return;
+  }
+  console.log("Read Done");
 
-//No image support atm
-var read = nodeID3.read("./example/music.mp3");
-console.log(read);
+  //No image support atm
+  var read = nodeID3.read("./example/music.mp3");
+  console.log(read);
+});	//Pass tags and filepath
